@@ -1,0 +1,28 @@
+{
+  "name": "@chess-trainer/server",
+  "version": "1.0.0",
+  "description": "Chess trainer backend server",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix"
+  },
+  "dependencies": {
+    "hono": "^3.12.0",
+    "ws": "^8.14.2",
+    "chess.js": "^1.0.0-beta.6",
+    "@chess-trainer/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.10",
+    "@types/node": "^20.9.0",
+    "tsx": "^4.6.0",
+    "typescript": "^5.3.2",
+    "vitest": "^1.0.4"
+  }
+}

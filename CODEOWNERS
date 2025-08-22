@@ -1,0 +1,15 @@
+# Global owners
+* @your-github-username
+
+# App-specific owners
+/apps/app/ @your-github-username
+/apps/server/ @your-github-username
+/packages/shared/ @your-github-username
+
+# Configuration files
+/.github/ @your-github-username
+*.yml @your-github-username
+*.yaml @your-github-username
+*.json @your-github-username
+*.md @your-github-username
+
