@@ -221,12 +221,103 @@ export function useStockfish() {
     }
   }, [isReady, executeEngineMove]);
 
+  // New function for coaching: Get position evaluation and best move with PV
+const analyzePositionForCoaching = useCallback((fen: string, depth: number = 15) => {
+  if (!isReady) {
+    console.warn('⚠️ Stockfish not ready');
+    return null;
+  }
+  
+  console.log('🎓 Coaching analysis for position:', fen);
+  setIsAnalyzing(true);
+  isAnalyzingRef.current = true;
+  
+  // Reset engine state and analyze
+  send("ucinewgame");
+  send(`position fen ${fen}`);
+  send(`go depth ${depth}`);
+  
+  // Return a promise that resolves with evaluation, best move, and PV
+  return new Promise<{ 
+    evaluation: number; 
+    bestMove: string; 
+    pv: string; 
+    ponder?: string 
+  }>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      console.warn('⚠️ Coaching analysis timeout');
+      send("stop");
+      setIsAnalyzing(false);
+      isAnalyzingRef.current = false;
+      reject(new Error('Coaching analysis timeout'));
+    }, 15000);
+    
+    let evaluation = 0;
+    let bestMove = '';
+    let pv = '';
+    let ponder = '';
+    
+    // Store the original onmessage to restore it later
+    const originalOnMessage = workerRef.current?.onmessage;
+    
+    if (workerRef.current) {
+      workerRef.current.onmessage = (e) => {
+        const message = e.data;
+        console.log("🎓 Coaching analysis:", message);
+        
+        // Parse evaluation from info messages
+        if (message.includes('score cp')) {
+          const scoreMatch = message.match(/score cp (-?\d+)/);
+          if (scoreMatch) {
+            evaluation = parseInt(scoreMatch[1]);
+          }
+        } else if (message.includes('score mate')) {
+          const mateMatch = message.match(/score mate (-?\d+)/);
+          if (mateMatch) {
+            const mateIn = parseInt(mateMatch[1]);
+            // Convert mate score to a very high evaluation
+            evaluation = mateIn > 0 ? 10000 : -10000;
+          }
+        }
+        
+        // Parse principal variation
+        if (message.includes('pv')) {
+          const pvMatch = message.match(/pv ([a-h][1-8][a-h][1-8][qrbn]?)/);
+          if (pvMatch) {
+            pv = pvMatch[1];
+          }
+        }
+        
+        if (message.startsWith('bestmove')) {
+          clearTimeout(timeout);
+          setIsAnalyzing(false);
+          isAnalyzingRef.current = false;
+          
+          const parts = message.split(' ');
+          bestMove = parts[1];
+          if (parts[3] && parts[3] !== 'none') {
+            ponder = parts[3];
+          }
+          
+          // Restore original message handler
+          if (workerRef.current && originalOnMessage) {
+            workerRef.current.onmessage = originalOnMessage;
+          }
+          
+          resolve({ evaluation, bestMove, pv, ponder });
+        }
+      };
+    }
+  });
+}, [isReady, send]);
+
   return { 
     send, 
     analyze, 
     stop, 
     testEngine,
     executeEngineMove,
+    analyzePositionForCoaching,
     autoPlay,
     isReady, 
     isAnalyzing, 

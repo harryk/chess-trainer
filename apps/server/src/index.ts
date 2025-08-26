@@ -1,9 +1,15 @@
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import { StockfishEngine } from './services/StockfishEngine';
+import OpenAI from 'openai';
 
 // Initialize Stockfish engine
 const engine = new StockfishEngine();
+
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || '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',
+});
 
 // Initialize HTTP and WebSocket server
 const server = createServer();
@@ -46,6 +52,51 @@ server.on('request', (req, res) => {
   if (req.url === '/engine/status' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ status: 'ready' }));
+    return;
+  }
+  
+  // Coaching endpoint
+  if (req.url === '/api/coach' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    
+    req.on('end', async () => {
+      try {
+        const { lastMove, evalBefore, evalAfter, bestMove, pv } = JSON.parse(body);
+        
+        const prompt = `
+You are a chess coach. The player just played: ${lastMove}.
+Stockfish evaluation before the move: ${evalBefore} centipawns.
+Stockfish evaluation after the move: ${evalAfter} centipawns.
+Best move suggested by Stockfish: ${bestMove}.
+Engine line: ${pv}.
+
+Explain clearly for an intermediate player:
+1. Was the move good or bad compared to alternatives?
+2. Why?
+3. What principle should the player learn from this move?
+
+Keep your response concise and educational.`;
+
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 300,
+        });
+
+        const advice = response.choices[0]?.message?.content || "Unable to generate advice at this time.";
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ advice }));
+        
+      } catch (error) {
+        console.error('Coaching error:', error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Failed to generate coaching advice' }));
+      }
+    });
     return;
   }
   
@@ -178,7 +229,7 @@ process.on('SIGTERM', () => {
 // Start server
 const PORT = process.env.PORT || 3001;
 
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`🚀 Chess Trainer Server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/healthz`);
   console.log(`🔌 Engine WebSocket: ws://0.0.0.0:${PORT}`);

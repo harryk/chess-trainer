@@ -1,43 +1,90 @@
-.header {
+.app-bar {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.app-bar:hover {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.app-bar-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo-section {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  height: 64px;
-  background-color: #fff;
-  border-bottom: 1px solid #e0e0e0;
+  gap: 15px;
 }
 
-.content {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.logo-icon {
+  font-size: 2.2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  animation: float 3s ease-in-out infinite;
 }
 
-.title {
-  font-size: 20px;
-  font-weight: bold;
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-3px); }
+}
+
+.app-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  background: linear-gradient(45deg, #FFD700, #FFED4E, #FFD700);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 1px;
   margin: 0;
-  line-height: 1.2;
 }
 
-.subtitle {
-  font-size: 14px;
-  margin: 0;
-  line-height: 1.2;
-  opacity: 0.8;
+/* Responsive design */
+@media (max-width: 768px) {
+  .app-bar-content {
+    padding: 12px 15px;
+  }
+  
+  .logo-icon {
+    font-size: 1.8rem;
+  }
+  
+  .app-title {
+    font-size: 1.5rem;
+  }
 }
 
-.theme-toggle {
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-}
-
-.theme-toggle:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+@media (max-width: 480px) {
+  .app-bar-content {
+    padding: 10px 12px;
+  }
+  
+  .logo-section {
+    gap: 10px;
+  }
+  
+  .logo-icon {
+    font-size: 1.6rem;
+  }
+  
+  .app-title {
+    font-size: 1.3rem;
+  }
 }

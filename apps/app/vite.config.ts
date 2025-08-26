@@ -8,6 +8,7 @@ export default defineConfig({
   // Configure server with proper WASM MIME types and security headers
   server: {
     port: 3000,
+    host: '0.0.0.0', // Allow external connections
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'require-corp',

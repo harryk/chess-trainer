@@ -160,6 +160,9 @@ importers:
       hono:
         specifier: ^4.0.0
         version: 4.9.4
+      openai:
+        specifier: ^5.15.0
+        version: 5.15.0(ws@8.18.3)
       stockfish:
         specifier: ^15.0.0
         version: 15.0.0
@@ -4345,6 +4348,21 @@ packages:
     dependencies:
       mimic-function: 5.0.1
     dev: true
+
+  /openai@5.15.0(ws@8.18.3):
+    resolution: {integrity: sha512-kcUdws8K/A8m02I+IqFBwO51gS+87GP89yWEufGbzEi8anBz4FB/bti2QxaJdGwwY4mwJGzx85XO7TuL/Tpu1w==}
+    hasBin: true
+    peerDependencies:
+      ws: ^8.18.0
+      zod: ^3.23.8
+    peerDependenciesMeta:
+      ws:
+        optional: true
+      zod:
+        optional: true
+    dependencies:
+      ws: 8.18.3
+    dev: false
 
   /optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}

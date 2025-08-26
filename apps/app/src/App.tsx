@@ -1,6 +1,6 @@
 import React from 'react';
 import { useChessStore } from './stores/chessStore';
-import { AppBar } from './components/AppBar';
+import AppBar from './components/AppBar';
 import ChessBoard from './components/ChessBoard';
 import { GameControls } from './components/GameControls';
 import { ThemeProvider } from './providers/ThemeProvider';
