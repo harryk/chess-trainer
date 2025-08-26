@@ -8,8 +8,12 @@ const engine = new StockfishEngine();
 
 // Initialize OpenAI client
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || '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',
+  apiKey: process.env.OPENAI_API_KEY
 });
+
+if (!process.env.OPENAI_API_KEY) {
+  console.warn('⚠️ Warning: OPENAI_API_KEY environment variable not set. Coaching functionality will not work.');
+}
 
 // Initialize HTTP and WebSocket server
 const server = createServer();
