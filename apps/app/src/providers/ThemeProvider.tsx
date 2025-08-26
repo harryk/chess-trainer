@@ -1,6 +1,19 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useColorScheme } from 'react-native';
-import { Theme } from '@chess-trainer/shared';
+
+// Define Theme interface locally instead of importing from shared package
+interface Theme {
+  dark: boolean;
+  colors: {
+    primary: string;
+    secondary: string;
+    background: string;
+    surface: string;
+    error: string;
+    text: string;
+    textSecondary: string;
+    border: string;
+  };
+}
 
 interface ThemeContextType {
   theme: Theme;
@@ -39,12 +52,22 @@ const darkTheme: Theme = {
 };
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const colorScheme = useColorScheme();
-  const [theme, setTheme] = useState<Theme>(colorScheme === 'dark' ? darkTheme : lightTheme);
+  const [theme, setTheme] = useState<Theme>(lightTheme);
 
   useEffect(() => {
-    setTheme(colorScheme === 'dark' ? darkTheme : lightTheme);
-  }, [colorScheme]);
+    // Check if user prefers dark mode
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(prefersDark ? darkTheme : lightTheme);
+    
+    // Listen for changes in color scheme preference
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      setTheme(e.matches ? darkTheme : lightTheme);
+    };
+    
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   const toggleTheme = () => {
     setTheme(prev => prev.dark ? lightTheme : darkTheme);

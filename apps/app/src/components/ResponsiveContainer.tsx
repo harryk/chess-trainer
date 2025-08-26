@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { useTheme } from '../providers/ThemeProvider';
+import './ResponsiveContainer.css';
 
 interface ResponsiveContainerProps {
   children: React.ReactNode;
@@ -13,43 +13,22 @@ export const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
   maxWidth = 1200,
   padding = 20,
 }) => {
-  const { width } = useWindowDimensions();
   const { theme } = useTheme();
-  
-  const isLargeScreen = width > 768;
-  const containerWidth = isLargeScreen ? Math.min(width - padding * 2, maxWidth) : width - padding * 2;
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: theme.colors.background,
-          paddingHorizontal: padding,
-        },
-      ]}
+    <div
+      className="container"
+      style={{
+        backgroundColor: theme.colors.background,
+        paddingLeft: padding,
+        paddingRight: padding,
+      }}
     >
-      <View
-        style={[
-          styles.content,
-          {
-            width: containerWidth,
-            maxWidth: maxWidth,
-          },
-        ]}
-      >
+      <div className="content">
         {children}
-      </View>
-    </View>
+      </div>
+    </div>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  content: {
-    flex: 1,
-  },
-});
+

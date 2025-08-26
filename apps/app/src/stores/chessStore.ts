@@ -1,6 +1,22 @@
 import { create } from 'zustand';
 import { Chess } from 'chess.js';
-import { ChessGame, ChessMove } from '@chess-trainer/shared';
+
+// Define interfaces locally instead of importing from shared package
+interface ChessMove {
+  from: string;
+  to: string;
+  piece: string;
+  color: string;
+  san: string;
+  flags: string;
+}
+
+interface ChessGame {
+  fen: string;
+  moves: ChessMove[];
+  isGameOver: boolean;
+  winner?: 'white' | 'black' | 'draw';
+}
 
 interface ChessState {
   game: Chess | null;
@@ -72,18 +88,27 @@ export const useChessStore = create<ChessState & ChessActions>((set, get) => ({
     const { game, selectedSquare } = get();
     if (!game) return;
 
-    if (selectedSquare === square) {
-      set({ selectedSquare: null, validMoves: [] });
-      return;
-    }
-
-    const piece = game.get(square);
-    if (piece && piece.color === (game.turn() === 'w' ? 'white' : 'black')) {
-      const moves = game.moves({ square, verbose: true });
-      const validMoves = moves.map(move => move.to);
-      set({ selectedSquare: square, validMoves });
-    } else if (selectedSquare && get().validMoves.includes(square)) {
-      get().makeMove(selectedSquare, square);
+    // If no square is selected, select this one
+    if (!selectedSquare) {
+      const piece = game.get(square as any);
+      if (piece && piece.color === (game.turn() === 'w' ? 'w' : 'b')) {
+        const validMoves = game.moves({ square: square as any, verbose: true });
+        set({
+          selectedSquare: square,
+          validMoves: validMoves.map((m: any) => m.to),
+        });
+      }
+    } else {
+      // If a square is already selected, try to make a move
+      if (selectedSquare !== square) {
+        const success = get().makeMove(selectedSquare, square);
+        if (success) {
+          set({ selectedSquare: null, validMoves: [] });
+        }
+      } else {
+        // Clicking the same square deselects it
+        set({ selectedSquare: null, validMoves: [] });
+      }
     }
   },
 

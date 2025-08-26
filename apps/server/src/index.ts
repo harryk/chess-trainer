@@ -1,171 +1,186 @@
-import { Hono } from 'hono';
 import { WebSocketServer } from 'ws';
-import { Chess } from 'chess.js';
-import { ChessGame, ChessMove, ApiResponse } from '@chess-trainer/shared';
+import { createServer } from 'http';
+import { StockfishEngine } from './services/StockfishEngine';
 
-const app = new Hono();
-const port = process.env.PORT || 3001;
+// Initialize Stockfish engine
+const engine = new StockfishEngine();
 
-// In-memory storage for games (in production, use a database)
-const games = new Map<string, Chess>();
+// Initialize HTTP and WebSocket server
+const server = createServer();
+const wss = new WebSocketServer({ server });
 
-// WebSocket server
-const wss = new WebSocketServer({ port: 3002 });
-
-wss.on('connection', (ws) => {
-  console.log('New WebSocket connection');
-
-  ws.on('message', (message) => {
-    try {
-      const data = JSON.parse(message.toString());
-      handleWebSocketMessage(ws, data);
-    } catch (error) {
-      console.error('WebSocket message error:', error);
-    }
-  });
-
-  ws.on('close', () => {
-    console.log('WebSocket connection closed');
-  });
+// Handle HTTP requests
+server.on('request', (req, res) => {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    res.writeHead(200);
+    res.end();
+    return;
+  }
+  
+  // Health check endpoint
+  if (req.url === '/healthz' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: {
+        used: process.memoryUsage().heapUsed,
+        total: process.memoryUsage().heapTotal,
+        percentage: (process.memoryUsage().heapUsed / process.memoryUsage().heapTotal) * 100,
+      },
+      engine: {
+        status: 'ready',
+        lastActivity: new Date().toISOString(),
+      },
+    }));
+    return;
+  }
+  
+  // Engine status endpoint
+  if (req.url === '/engine/status' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'ready' }));
+    return;
+  }
+  
+  // Default response for unknown routes
+  res.writeHead(404, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ error: 'Not Found' }));
 });
 
-function handleWebSocketMessage(ws: any, data: any) {
-  switch (data.type) {
-    case 'join_game':
-      const game = games.get(data.gameId);
-      if (game) {
-        ws.gameId = data.gameId;
+// WebSocket connection handler
+wss.on('connection', (ws) => {
+  console.log('WebSocket client connected');
+
+  // Send welcome message
+  ws.send(JSON.stringify({
+    type: 'connect',
+    data: {
+      message: 'Connected to Chess Engine',
+      engineStatus: engine.getStatus(),
+    },
+  }));
+
+  // Handle messages
+  ws.on('message', async (data: Buffer) => {
+    try {
+      const message = JSON.parse(data.toString());
+      console.log('Received message:', message);
+
+      if (message.type === 'play' && message.data) {
+        const { fen, skill = 10, movetime = 1000 } = message.data;
+        
+        // Send acknowledgment
         ws.send(JSON.stringify({
-          type: 'game_state',
-          game: getGameState(data.gameId)
+          type: 'info',
+          data: {
+            message: 'Engine thinking...',
+            skill,
+            movetime,
+          },
         }));
-      }
-      break;
-    case 'make_move':
-      if (ws.gameId) {
-        const game = games.get(ws.gameId);
-        if (game) {
-          try {
-            const move = game.move(data.move);
-            if (move) {
-              // Broadcast move to all players in the game
-              wss.clients.forEach((client: any) => {
-                if (client.gameId === ws.gameId && client.readyState === 1) {
-                  client.send(JSON.stringify({
-                    type: 'move_made',
-                    move: move,
-                    game: getGameState(ws.gameId)
-                  }));
-                }
-              });
-            }
-          } catch (error) {
-            ws.send(JSON.stringify({
-              type: 'error',
-              message: 'Invalid move'
-            }));
-          }
+
+        // Start engine analysis
+        try {
+          await engine.play({ fen, skill, movetime });
+        } catch (error) {
+          console.error('Engine error:', error);
+          ws.send(JSON.stringify({
+            type: 'error',
+            data: error instanceof Error ? error.message : 'Engine error',
+          }));
         }
       }
-      break;
-  }
-}
-
-function getGameState(gameId: string) {
-  const game = games.get(gameId);
-  if (!game) return null;
-
-  return {
-    id: gameId,
-    fen: game.fen(),
-    moves: game.history({ verbose: true }),
-    isGameOver: game.isGameOver(),
-    winner: game.isCheckmate() ? (game.turn() === 'w' ? 'black' : 'white') : undefined
-  };
-}
-
-// REST API endpoints
-app.get('/', (c) => {
-  return c.json({ message: 'Chess Trainer Server' });
-});
-
-app.post('/api/games', (c) => {
-  const gameId = Math.random().toString(36).substring(7);
-  const chess = new Chess();
-  games.set(gameId, chess);
-  
-  const response: ApiResponse<{ gameId: string }> = {
-    success: true,
-    data: { gameId }
-  };
-  
-  return c.json(response);
-});
-
-app.get('/api/games/:id', (c) => {
-  const gameId = c.req.param('id');
-  const game = games.get(gameId);
-  
-  if (!game) {
-    const response: ApiResponse<null> = {
-      success: false,
-      error: 'Game not found'
-    };
-    return c.json(response, 404);
-  }
-  
-  const response: ApiResponse<ChessGame> = {
-    success: true,
-    data: getGameState(gameId)!
-  };
-  
-  return c.json(response);
-});
-
-app.post('/api/games/:id/moves', async (c) => {
-  const gameId = c.req.param('id');
-  const game = games.get(gameId);
-  
-  if (!game) {
-    const response: ApiResponse<null> = {
-      success: false,
-      error: 'Game not found'
-    };
-    return c.json(response, 404);
-  }
-  
-  const body = await c.req.json();
-  const { move } = body;
-  
-  try {
-    const result = game.move(move);
-    if (result) {
-      const response: ApiResponse<ChessMove> = {
-        success: true,
-        data: result
-      };
-      return c.json(response);
-    } else {
-      const response: ApiResponse<null> = {
-        success: false,
-        error: 'Invalid move'
-      };
-      return c.json(response, 400);
+    } catch (error) {
+      console.error('Failed to parse WebSocket message:', error);
+      ws.send(JSON.stringify({
+        type: 'error',
+        data: 'Invalid message format',
+      }));
     }
-  } catch (error) {
-    const response: ApiResponse<null> = {
-      success: false,
-      error: 'Invalid move'
-    };
-    return c.json(response, 400);
-  }
+  });
+
+  // Handle close
+  ws.on('close', () => {
+    console.log('WebSocket client disconnected');
+  });
+
+  // Handle errors
+  ws.on('error', (error) => {
+    console.error('WebSocket error:', error);
+  });
 });
 
-console.log(`Server running on port ${port}`);
-console.log(`WebSocket server running on port 3002`);
+// Set up engine event handlers
+engine.on('bestmove', (data: { bestmove: string; ponder?: string }) => {
+  console.log('Engine best move:', data);
+  // Broadcast to all connected clients
+  wss.clients.forEach((client) => {
+    if (client.readyState === 1) { // OPEN
+      client.send(JSON.stringify({
+        type: 'bestmove',
+        data,
+      }));
+    }
+  });
+});
 
-export default {
-  port,
-  fetch: app.fetch,
-};
+engine.on('info', (info: any) => {
+  // Broadcast engine info to all clients
+  wss.clients.forEach((client) => {
+    if (client.readyState === 1) { // OPEN
+      client.send(JSON.stringify({
+        type: 'info',
+        data: info,
+      }));
+    }
+  });
+});
 
+engine.on('error', (error: any) => {
+  console.error('Engine error:', error);
+  // Broadcast error to all clients
+  wss.clients.forEach((client) => {
+    if (client.readyState === 1) { // OPEN
+      client.send(JSON.stringify({
+        type: 'error',
+        data: error.toString(),
+      }));
+    }
+  });
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+  console.log('Shutting down server...');
+  engine.quit();
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGTERM', () => {
+  console.log('Shutting down server...');
+  engine.quit();
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
+// Start server
+const PORT = process.env.PORT || 3001;
+
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Chess Trainer Server running on port ${PORT}`);
+  console.log(`📊 Health check: http://localhost:${PORT}/healthz`);
+  console.log(`🔌 Engine WebSocket: ws://0.0.0.0:${PORT}`);
+  console.log(`🌐 Network accessible at: http://172.20.10.4:${PORT}`);
+});

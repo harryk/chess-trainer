@@ -1,0 +1,135 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background-color: transparent;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.loading {
+  font-size: 18px;
+  color: #666;
+  margin: 40px 0;
+}
+
+.game-over {
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 20px;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+}
+
+.game-over h2 {
+  margin: 0 0 10px 0;
+  color: #d32f2f;
+}
+
+.reset-button {
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+.reset-button:hover {
+  background-color: #1565c0;
+}
+
+.board {
+  border: 2px solid #8B4513;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+}
+
+.square {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.square.light {
+  background-color: #F0D9B5;
+}
+
+.square.dark {
+  background-color: #B58863;
+}
+
+.square:hover {
+  opacity: 0.8;
+  transform: scale(1.05);
+}
+
+.square.selected {
+  background-color: #4CAF50 !important;
+  box-shadow: inset 0 0 0 2px #2E7D32;
+}
+
+.square.valid-move {
+  background-color: #81C784 !important;
+  box-shadow: inset 0 0 0 2px #4CAF50;
+}
+
+.square.last-move {
+  background-color: #FFB74D !important;
+  box-shadow: inset 0 0 0 2px #FF9800;
+}
+
+.piece {
+  font-size: 24px;
+  font-weight: bold;
+  color: #000;
+  user-select: none;
+  pointer-events: none;
+}
+
+.game-info {
+  text-align: center;
+}
+
+.turn {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+}
+
+.engine-thinking {
+  font-size: 16px;
+  margin: 0 0 10px 0;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.subtitle {
+  font-size: 16px;
+  text-align: center;
+  opacity: 0.7;
+  margin: 0;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

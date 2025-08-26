@@ -1,0 +1,213 @@
+.game-controls {
+  padding: 20px;
+  background: var(--background-secondary);
+  border-radius: 8px;
+  margin: 20px 0;
+  max-width: 600px;
+}
+
+.game-controls h3 {
+  margin: 0 0 20px 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.control-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--background-primary);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.control-section h4 {
+  margin: 0 0 16px 0;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.control-btn {
+  padding: 10px 20px;
+  margin: 8px 8px 8px 0;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--primary-color);
+  color: white;
+}
+
+.control-btn:hover:not(:disabled) {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.control-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.control-btn.primary {
+  background: var(--success-color);
+}
+
+.control-btn.primary:hover:not(:disabled) {
+  background: var(--success-hover);
+}
+
+.control-btn.secondary {
+  background: var(--warning-color);
+  color: white;
+}
+
+.control-btn.secondary:hover:not(:disabled) {
+  background: var(--warning-hover);
+}
+
+.engine-status {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.status-indicator {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.status-indicator.ready {
+  background: var(--success-color);
+  color: white;
+}
+
+.status-indicator.not-ready {
+  background: var(--error-color);
+  color: white;
+}
+
+.analyzing {
+  color: var(--warning-color);
+  font-weight: 600;
+}
+
+.button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.analysis-controls {
+  margin: 16px 0;
+}
+
+.analysis-controls label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+}
+
+.analysis-controls input[type="range"] {
+  flex: 1;
+  margin: 0 10px;
+}
+
+.engine-output {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.engine-output h4 {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.engine-output pre {
+  background: var(--background-primary);
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  font-size: 12px;
+  overflow-x: auto;
+}
+
+.game-result {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.game-result h3 {
+  margin: 0 0 12px 0;
+  color: var(--primary-color);
+}
+
+.auto-play-toggle {
+  margin: 15px 0;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.auto-play-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auto-play-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.auto-play-toggle small {
+  display: block;
+  margin-top: 5px;
+  margin-left: 28px;
+  color: #666;
+  font-size: 12px;
+}
+
+/* CSS Variables for theming */
+:root {
+  --background-primary: #ffffff;
+  --background-secondary: #f8f9fa;
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --primary-color: #007bff;
+  --primary-hover: #0056b3;
+  --success-color: #28a745;
+  --success-hover: #1e7e34;
+  --warning-color: #ffc107;
+  --warning-hover: #e0a800;
+  --error-color: #dc3545;
+  --border-color: #dee2e6;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+  --background-primary: #2d3748;
+  --background-secondary: #1a202c;
+  --text-primary: #f7fafc;
+  --text-secondary: #a0aec0;
+  --border-color: #4a5568;
+}

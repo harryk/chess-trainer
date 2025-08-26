@@ -1,104 +1,188 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Button, Text } from 'react-native-paper';
+import React, { useState } from 'react';
 import { useChessStore } from '../stores/chessStore';
-import { useTheme } from '../providers/ThemeProvider';
+import { useStockfish } from '../hooks/useStockfish';
+import { useAutoPlay } from '../providers/AutoPlayProvider';
+import './GameControls.css';
 
-const GameControls: React.FC = () => {
-  const { game, isGameOver, winner, resetGame } = useChessStore();
-  const { theme, toggleTheme, isDark } = useTheme();
+export const GameControls: React.FC = () => {
+  const {
+    game,
+    resetGame,
+    isGameOver,
+    winner
+  } = useChessStore();
 
-  if (!game) {
-    return null;
-  }
+  const {
+    analyze,
+    stop,
+    testEngine,
+    executeEngineMove,
+    isReady,
+    isAnalyzing,
+    lastMessage
+  } = useStockfish();
+
+  const { autoPlayEnabled, setAutoPlayEnabled } = useAutoPlay();
+  const [analysisDepth, setAnalysisDepth] = useState(20);
+
+  const handleAnalyze = () => {
+    if (game && isReady) {
+      analyze(game.fen(), analysisDepth);
+    }
+  };
+
+  const handleStop = () => {
+    stop();
+  };
+
+  const handleEngineMove = () => {
+    if (game && isReady) {
+      analyze(game.fen(), 15);
+    }
+  };
+
+  const handleTestEngine = () => {
+    if (isReady) {
+      testEngine();
+    }
+  };
+
+  const handleMakeEngineMove = async () => {
+    if (!game || !isReady || isAnalyzing) {
+      console.warn('⚠️ Cannot make engine move - game not ready or already analyzing');
+      return;
+    }
+
+    try {
+      console.log('🤖 Requesting engine move...');
+      const result = await executeEngineMove(game.fen(), 15);
+      
+      if (result && result.bestmove) {
+        console.log('🤖 Engine recommends move:', result.bestmove);
+        
+        // Convert UCI move to chess.js format and make the move
+        const move = result.bestmove;
+        const from = move.substring(0, 2);
+        const to = move.substring(2, 4);
+        const promotion = move.length > 4 ? move.substring(4, 5) : undefined;
+        
+        // Use the chess store to make the move
+        const { makeMove } = useChessStore.getState();
+        const moveResult = makeMove(from, to, promotion);
+        
+        if (moveResult) {
+          console.log('✅ Engine move executed successfully:', moveResult);
+        } else {
+          console.warn('⚠️ Failed to execute engine move');
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error getting engine move:', error);
+    }
+  };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.surface }]}>
-      <View style={styles.controls}>
-        <Button
-          mode="contained"
-          onPress={resetGame}
-          style={[styles.button, { backgroundColor: theme.colors.primary }]}
-          textColor={theme.colors.background}
-        >
-          New Game
-        </Button>
-        
-        <Button
-          mode="outlined"
-          onPress={toggleTheme}
-          style={[styles.button, { borderColor: theme.colors.primary }]}
-          textColor={theme.colors.primary}
-        >
-          {isDark ? '☀️ Light' : '🌙 Dark'}
-        </Button>
-      </View>
+    <div className="game-controls">
+      <div className="control-section">
+        <h3>Game Controls</h3>
+        <div className="button-group">
+          <button
+            onClick={resetGame}
+            className="control-btn"
+          >
+            New Game
+          </button>
+        </div>
+      </div>
+
+      <div className="control-section">
+        <h3>Stockfish Engine</h3>
+        <div className="engine-status">
+          <span className={`status-indicator ${isReady ? 'ready' : 'not-ready'}`}>
+            {isReady ? '🟢 Ready' : '🔴 Not Ready'}
+          </span>
+          {isAnalyzing && <span className="analyzing">🔍 Analyzing...</span>}
+        </div>
+
+        <div className="auto-play-toggle">
+          <label>
+            <input
+              type="checkbox"
+              checked={autoPlayEnabled}
+              onChange={(e) => setAutoPlayEnabled(e.target.checked)}
+            />
+            🤖 Auto-play AI moves
+          </label>
+          <small>When enabled, Black (AI) will automatically make moves</small>
+        </div>
+
+        <div className="button-group">
+          <button
+            onClick={handleAnalyze}
+            disabled={!isReady || isAnalyzing}
+            className="control-btn"
+          >
+            Analyze Position
+          </button>
+          <button
+            onClick={handleStop}
+            disabled={!isAnalyzing}
+            className="control-btn"
+          >
+            Stop Analysis
+          </button>
+          <button
+            onClick={handleEngineMove}
+            disabled={!isReady || isAnalyzing}
+            className="control-btn"
+          >
+            Get Engine Move
+          </button>
+          <button
+            onClick={handleTestEngine}
+            disabled={!isReady}
+            className="control-btn test-btn"
+          >
+            Test Engine
+          </button>
+          <button
+            onClick={handleMakeEngineMove}
+            disabled={!isReady || isAnalyzing || isGameOver}
+            className="control-btn engine-move-btn"
+          >
+            🤖 Make Engine Move
+          </button>
+        </div>
+
+        <div className="analysis-controls">
+          <label>
+            Analysis Depth:
+            <input
+              type="range"
+              min="1"
+              max="30"
+              value={analysisDepth}
+              onChange={(e) => setAnalysisDepth(Number(e.target.value))}
+              disabled={isAnalyzing}
+            />
+            <span>{analysisDepth}</span>
+          </label>
+        </div>
+
+        {lastMessage && (
+          <div className="engine-output">
+            <h4>Engine Output:</h4>
+            <pre>{JSON.stringify(lastMessage, null, 2)}</pre>
+          </div>
+        )}
+      </div>
 
       {isGameOver && (
-        <View style={styles.gameOver}>
-          <Text style={[styles.gameOverText, { color: theme.colors.text }]}>
-            Game Over!
-          </Text>
-          {winner && (
-            <Text style={[styles.winnerText, { color: theme.colors.primary }]}>
-              {winner.charAt(0).toUpperCase() + winner.slice(1)} wins!
-            </Text>
-          )}
-        </View>
+        <div className="game-result">
+          <h3>Game Over</h3>
+          <p>{winner ? `${winner === 'white' ? 'White' : winner === 'black' ? 'Black' : 'Draw'} wins!` : 'Draw!'}</p>
+        </div>
       )}
-
-      <View style={styles.status}>
-        <Text style={[styles.statusText, { color: theme.colors.textSecondary }]}>
-          Turn: {game.turn() === 'w' ? 'White' : 'Black'}
-        </Text>
-        <Text style={[styles.statusText, { color: theme.colors.textSecondary }]}>
-          Moves: {game.history().length}
-        </Text>
-      </View>
-    </View>
+    </div>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    borderRadius: 8,
-    margin: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  controls: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 20,
-  },
-  button: {
-    minWidth: 120,
-  },
-  gameOver: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  gameOverText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  winnerText: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  status: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  statusText: {
-    fontSize: 16,
-  },
-});
-
-export default GameControls;
-

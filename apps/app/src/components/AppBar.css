@@ -1,0 +1,43 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 64px;
+  background-color: #fff;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.subtitle {
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.2;
+  opacity: 0.8;
+}
+
+.theme-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.theme-toggle:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}

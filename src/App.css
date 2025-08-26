@@ -1,0 +1,25 @@
+.App {
+  text-align: center;
+  min-height: 100vh;
+  background-color: #282c34;
+  color: white;
+}
+
+.App-header {
+  background-color: #1a1d23;
+  padding: 20px;
+  color: white;
+}
+
+.App-header h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+main {
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 120px);
+}
